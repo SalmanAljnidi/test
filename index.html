@@ -18,7 +18,7 @@
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
-            touch-action: none; /* لمنع التكبير بالسحب */
+            touch-action: none;
         }
 
         header {
@@ -34,7 +34,7 @@
         }
 
         canvas {
-            background-color: #83af9b; /* لون العشب */
+            background-color: #83af9b;
             display: block;
         }
 
@@ -45,7 +45,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.85);
+            background: rgba(0, 0, 0, 0.9);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -65,7 +65,7 @@
             border: none;
             padding: 15px 30px;
             color: white;
-            font-size: 1.2rem;
+            font-size: 1.4rem;
             border-radius: 50px;
             cursor: pointer;
             margin: 10px;
@@ -99,7 +99,6 @@
             transition: width 1s linear;
         }
 
-        /* الفوتر والحقوق */
         footer {
             margin-top: auto;
             padding: 20px;
@@ -129,9 +128,8 @@
         .social-links a.whatsapp:hover { color: #25D366; }
         .social-links a.snapchat:hover { color: #FFFC00; text-shadow: 0 0 2px black; }
 
-        /* التحكم */
         #controls {
-            display: none; /* يظهر فقط في الجوال */
+            display: none;
             margin-top: 10px;
         }
         .d-pad {
@@ -178,14 +176,14 @@
             <h2 style="color: #e74c3c;">توقف! أجب لتكمل</h2>
             <div class="timer-bar"><div id="timer-fill" class="timer-fill"></div></div>
             <div id="timer-text" style="margin-bottom:10px;"></div>
-            <div id="question-text" style="font-size: 1.5rem; margin-bottom: 20px; direction: ltr;"></div>
-            <div id="visual-representation" style="font-size: 1.2rem; margin-bottom: 20px; color: #f1c40f;"></div>
+            <div id="question-text" style="font-size: 2rem; margin-bottom: 20px; direction: ltr;"></div>
+            <div id="visual-representation" style="font-size: 1.5rem; margin-bottom: 20px; color: #f1c40f;"></div>
             <div id="choices-container"></div>
         </div>
 
         <div id="game-over-screen" class="overlay hidden">
             <h1 style="color: #c0392b;">حاول مرة أخرى!</h1>
-            <p id="final-score"></p>
+            <p id="final-score" style="font-size: 1.5rem;"></p>
             <button onclick="resetGame()">العودة للقائمة الرئيسية</button>
         </div>
     </div>
@@ -218,40 +216,35 @@
         const ctx = canvas.getContext('2d');
 
         // إعدادات اللعبة
-        const GRID = 40; // حجم الخلية
+        const GRID = 40; 
         const COLS = 10;
         const ROWS = 15;
         
-        let gameState = 'MENU'; // MENU, PLAYING, QUESTION, GAMEOVER
-        let gradeLevel = 'lower'; // lower, upper
+        let gameState = 'MENU';
+        let gradeLevel = 'lower';
         let score = 0;
         let speedMultiplier = 1;
         let animationId;
-        
-        // المؤقت
         let questionTimer;
         let timeLeft;
         let maxTime;
 
-        // الشخصية
-        let player = { x: 4, y: 14, char: '🐰' }; // البداية في الأسفل
-
-        // العوائق
+        let player = { x: 4, y: 14, char: '🐰' };
         let lanes = [];
 
-        // التهيئة
+        // دالة تحويل الأرقام الإنجليزية إلى عربية
+        function toArabicNum(n) {
+            return n.toString().replace(/\d/g, d => "٠١٢٣٤٥٦٧٨٩"[d]);
+        }
+
         function initLanes() {
             lanes = [];
-            // إنشاء مسارات (صفوف)
-            // الصفوف من 1 إلى 13 (0 و 14 مناطق آمنة)
             for (let r = 1; r < ROWS - 1; r++) {
-                // تحديد نوع المسار عشوائياً (شارع، قطار، أو فارغ أحياناً للراحة)
                 let type = Math.random() > 0.8 ? 'train' : 'road';
-                if (r % 2 === 0 && Math.random() > 0.5) type = 'safe'; // مناطق راحة
+                if (r % 2 === 0 && Math.random() > 0.5) type = 'safe';
 
                 if (type !== 'safe') {
                     let speed = (Math.random() * 1.5 + 1) * (Math.random() < 0.5 ? 1 : -1);
-                    // زيادة الصعوبة كلما تقدمنا
                     speed *= (1 + score * 0.1); 
                     
                     let items = [];
@@ -264,6 +257,7 @@
                         });
                     }
 
+                    // اخترنا سيارات غالباً ما تكون متجهة لليسار في ويندوز
                     lanes.push({
                         row: r,
                         type: type,
@@ -275,7 +269,6 @@
             }
         }
 
-        // بدء اللعبة
         function startGame(level) {
             gradeLevel = level;
             player = { x: 4, y: 14, char: '🐰' };
@@ -294,7 +287,6 @@
             document.getElementById('start-screen').classList.remove('hidden');
         }
 
-        // التحكم
         document.addEventListener('keydown', (e) => {
             if (gameState !== 'PLAYING') return;
             if (e.key === 'ArrowUp') handleInput('up');
@@ -311,34 +303,29 @@
             if (dir === 'left' && player.x > 0) player.x--;
             if (dir === 'right' && player.x < COLS - 1) player.x++;
 
-            // الفوز بالمرحلة (الوصول للأعلى)
             if (player.y === 0) {
                 score++;
-                speedMultiplier += 0.2; // زيادة السرعة
-                player.y = 14; // العودة للبداية
-                initLanes(); // تغيير أماكن السيارات
+                speedMultiplier += 0.2;
+                player.y = 14;
+                initLanes();
             }
         }
 
-        // حلقة اللعبة الرئيسية
         function gameLoop() {
             if (gameState !== 'PLAYING') return;
             
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // رسم المناطق الآمنة (عشب)
+            // الخلفية
             ctx.fillStyle = '#83af9b';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            // رسم الشارع
             lanes.forEach(lane => {
                 let y = lane.row * GRID;
                 
-                // خلفية المسار
                 if (lane.type === 'road') {
                     ctx.fillStyle = '#555';
                     ctx.fillRect(0, y, canvas.width, GRID);
-                    // خطوط الشارع
                     ctx.setLineDash([10, 10]);
                     ctx.strokeStyle = '#fff';
                     ctx.beginPath();
@@ -346,41 +333,40 @@
                     ctx.lineTo(canvas.width, y + GRID/2);
                     ctx.stroke();
                 } else if (lane.type === 'train') {
-                    ctx.fillStyle = '#3e2723'; // سكة حديد
+                    ctx.fillStyle = '#3e2723';
                     ctx.fillRect(0, y, canvas.width, GRID);
                     ctx.fillStyle = '#000';
                     ctx.fillRect(0, y+5, canvas.width, 4);
                     ctx.fillRect(0, y+30, canvas.width, 4);
                 }
 
-                // تحريك ورسم العناصر
                 lane.items.forEach(item => {
                     item.x += lane.speed * speedMultiplier;
                     
-                    // التكرار عند الخروج من الشاشة
                     if (lane.speed > 0 && item.x > canvas.width) item.x = -GRID;
                     if (lane.speed < 0 && item.x < -GRID) item.x = canvas.width;
 
-                    // رسم العنصر
                     ctx.font = '30px Arial';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
                     
-                    // عكس اتجاه الإيموجي إذا كانت الحركة لليسار
                     ctx.save();
                     let drawX = item.x + GRID/2;
                     let drawY = y + GRID/2;
-                    if (lane.speed < 0) {
+                    
+                    // تعديل اتجاه السيارة بناءً على السرعة
+                    // في ويندوز: السيارة تتجه لليسار افتراضياً.
+                    // إذا كانت السرعة موجبة (لليمين)، نعكسها لتتجه لليمين.
+                    if (lane.speed > 0) {
                         ctx.translate(drawX, drawY);
-                        ctx.scale(-1, 1);
+                        ctx.scale(-1, 1); 
                         ctx.fillText(lane.symbol, 0, 0);
                     } else {
+                        // إذا كانت السرعة سالبة (لليسار)، نتركها كما هي (لأنها أصلاً تتجه لليسار)
                         ctx.fillText(lane.symbol, drawX, drawY);
                     }
                     ctx.restore();
 
-                    // التحقق من التصادم
-                    // نستخدم مربع تصادم أصغر قليلاً من الخلية ليكون اللعب أسهل
                     let hitBoxMargin = 10;
                     if (
                         player.y === lane.row &&
@@ -392,27 +378,25 @@
                 });
             });
 
-            // رسم اللاعب
             ctx.font = '30px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(player.char, player.x * GRID + GRID/2, player.y * GRID + GRID/2);
 
-            // رسم النتيجة والمستوى
+            // عرض المرحلة بالأرقام العربية
             ctx.fillStyle = 'white';
-            ctx.font = '16px Tajawal';
-            ctx.fillText(`المرحلة: ${score + 1}`, 50, 20);
+            ctx.font = 'bold 20px Tajawal';
+            ctx.textAlign = 'right';
+            ctx.fillText(`المرحلة: ${toArabicNum(score + 1)}`, canvas.width - 20, 30);
 
             animationId = requestAnimationFrame(gameLoop);
         }
 
-        // عند التصادم
         function handleCollision() {
             gameState = 'QUESTION';
             generateQuestion();
         }
 
-        // توليد السؤال
         function generateQuestion() {
             const screen = document.getElementById('question-screen');
             const qText = document.getElementById('question-text');
@@ -422,8 +406,6 @@
             screen.classList.remove('hidden');
             vRep.innerHTML = '';
             
-            // تحديد الوقت حسب المستوى (تقريبي بناء على السكور)
-            // سأستخدم تصنيف بسيط: 0-2 مبتدئ، 3-5 متوسط، 6+ محترف
             let difficulty = 'beginner';
             if (score > 5) difficulty = 'expert';
             else if (score > 2) difficulty = 'intermediate';
@@ -436,45 +418,39 @@
             let visualString = "";
 
             if (gradeLevel === 'lower') {
-                // صفوف أولية: جمع وطرح 0-10
                 num1 = Math.floor(Math.random() * 11);
                 num2 = Math.floor(Math.random() * 11);
                 
                 if (Math.random() > 0.5) {
                     operator = '+';
                     answer = num1 + num2;
-                    // تمثيل بصري
                     visualString = generateVisual(num1, '🍎') + " + " + generateVisual(num2, '🍏');
                 } else {
                     operator = '-';
-                    // تأكد أن الأول أكبر من الثاني للطرح
                     if (num1 < num2) [num1, num2] = [num2, num1];
                     answer = num1 - num2;
                     visualString = generateVisual(num1, '🍎') + " - " + generateVisual(num2, '❌');
                 }
                 symbol = operator;
             } else {
-                // صفوف عليا: ضرب وقسمة
                 if (Math.random() > 0.5) {
-                    // ضرب
                     num1 = Math.floor(Math.random() * 11);
                     num2 = Math.floor(Math.random() * 11);
                     operator = '×';
                     answer = num1 * num2;
                 } else {
-                    // قسمة (بدون باق)
-                    num2 = Math.floor(Math.random() * 9) + 1; // المقسوم عليه لا يساوي صفر
-                    answer = Math.floor(Math.random() * 10); // الناتج رقم واحد
-                    num1 = answer * num2; // المقسوم
+                    num2 = Math.floor(Math.random() * 9) + 1;
+                    answer = Math.floor(Math.random() * 10);
+                    num1 = answer * num2;
                     operator = '÷';
                 }
                 symbol = operator;
             }
 
-            qText.innerText = `${num1} ${symbol} ${num2} = ?`;
+            // عرض السؤال بالأرقام العربية
+            qText.innerText = `${toArabicNum(num1)} ${symbol} ${toArabicNum(num2)} = ؟`;
             if (visualString) vRep.innerText = visualString;
 
-            // توليد خيارات
             let choices = [answer];
             while (choices.length < 3) {
                 let fake = Math.floor(Math.random() * (answer + 10));
@@ -482,14 +458,14 @@
                     choices.push(fake);
                 }
             }
-            // خلط الخيارات
             choices.sort(() => Math.random() - 0.5);
 
             choicesDiv.innerHTML = '';
             choices.forEach(c => {
                 let btn = document.createElement('button');
                 btn.className = 'choice-btn';
-                btn.innerText = c;
+                // عرض الخيارات بالأرقام العربية
+                btn.innerText = toArabicNum(c);
                 btn.onclick = () => checkAnswer(c === answer);
                 choicesDiv.appendChild(btn);
             });
@@ -502,13 +478,13 @@
         function startTimer() {
             clearInterval(questionTimer);
             document.getElementById('timer-fill').style.width = '100%';
-            document.getElementById('timer-text').innerText = timeLeft + " ثانية";
+            document.getElementById('timer-text').innerText = toArabicNum(timeLeft) + " ثانية";
             
             questionTimer = setInterval(() => {
                 timeLeft--;
                 let percent = (timeLeft / maxTime) * 100;
                 document.getElementById('timer-fill').style.width = percent + '%';
-                document.getElementById('timer-text').innerText = timeLeft + " ثانية";
+                document.getElementById('timer-text').innerText = toArabicNum(timeLeft) + " ثانية";
 
                 if (timeLeft <= 0) {
                     checkAnswer(false);
@@ -521,13 +497,11 @@
             document.getElementById('question-screen').classList.add('hidden');
             
             if (isCorrect) {
-                // إجابة صحيحة: إرجاع اللاعب خطوة للخلف للأمان وإكمال اللعب
                 player.y = Math.min(ROWS - 2, player.y + 2); 
                 gameState = 'PLAYING';
                 gameLoop();
             } else {
-                // إجابة خاطئة
-                document.getElementById('final-score').innerText = `وصلت للمستوى: ${score + 1}`;
+                document.getElementById('final-score').innerText = `وصلت للمرحلة: ${toArabicNum(score + 1)}`;
                 document.getElementById('game-over-screen').classList.remove('hidden');
                 gameState = 'GAMEOVER';
             }
